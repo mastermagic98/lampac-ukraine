@@ -1,7 +1,3 @@
-apis:
-  lampac-v1:
-    root: docs/specs/openapi-lampac-v1.yaml
-
 extends:
   - recommended
 
