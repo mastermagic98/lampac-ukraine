@@ -8,21 +8,19 @@ echo "[1/3] OpenAPI lint"
 npx --yes @redocly/cli@latest lint docs/specs/openapi-lampac-v1.yaml
 
 echo "[2/3] YAML parse validation"
-node <<'NODE'
-const fs = require('fs');
-const { parse } = require('yaml');
+ruby <<'RUBY'
+require "yaml"
 
-const files = [
-  'docs/specs/openapi-lampac-v1.yaml',
-  'docs/specs/provider-registry-v1.yaml',
-];
+files = [
+  "docs/specs/openapi-lampac-v1.yaml",
+  "docs/specs/provider-registry-v1.yaml",
+]
 
-for (const file of files) {
-  const input = fs.readFileSync(file, 'utf8');
-  parse(input);
-  console.log(`OK ${file}`);
-}
-NODE
+files.each do |file|
+  YAML.safe_load_file(file, permitted_classes: [], aliases: true)
+  puts "OK #{file}"
+end
+RUBY
 
 if command -v psql >/dev/null 2>&1; then
   echo "[3/3] SQL dry-run validation (requires local PostgreSQL)"
