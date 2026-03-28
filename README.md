@@ -16,5 +16,5 @@ bash scripts/validate-specs.sh
 
 Що перевіряється:
 1. OpenAPI lint (`@redocly/cli@2.25.2`, правила в `redocly.yaml`)
-2. Валідність YAML-спек (`provider-registry-v1.yaml`, `openapi-lampac-v1.yaml`)
+2. Валідність YAML-спек (`provider-registry-v1.yaml`, `openapi-lampac-v1.yaml`) + семантичні guard-checks для OpenAPI (`security`, `license`, `operationId`, `tag.description`, `server url`)
 3. SQL dry-run міграції `db-mapping-v1.sql` на тимчасовій PostgreSQL БД
