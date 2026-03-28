@@ -24,6 +24,26 @@ errors = []
 errors << "info.license is required" unless openapi.dig("info", "license")
 errors << "top-level security is required" unless openapi["security"].is_a?(Array) && !openapi["security"].empty?
 
+schemas = openapi.dig("components", "schemas")
+unless schemas.is_a?(Hash)
+  errors << "components.schemas is required"
+end
+
+required_schemas = %w[
+  MovieExportResponse
+  SeriesExportResponse
+  EpisodeExportResponse
+  EnrichByTmdbRequest
+  EnrichAcceptedResponse
+  EnrichJobStatusResponse
+  ErrorResponse
+]
+
+if schemas.is_a?(Hash)
+  missing = required_schemas.reject { |schema| schemas.key?(schema) }
+  errors << "missing components.schemas: #{missing.join(', ')}" unless missing.empty?
+end
+
 tags = openapi["tags"] || []
 if tags.empty? || tags.any? { |tag| tag["description"].to_s.strip.empty? }
   errors << "all tags must have description"
