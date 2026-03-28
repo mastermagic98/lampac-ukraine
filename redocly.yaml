@@ -1,9 +1,0 @@
-extends:
-  - recommended
-
-rules:
-  security-defined: error
-  operation-operationId: warn
-  info-license: warn
-  tag-description: warn
-  no-server-example.com: warn
