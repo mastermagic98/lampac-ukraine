@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "[1/3] OpenAPI lint"
-npx --yes @redocly/cli@latest lint
+npx --yes @redocly/cli@2.25.2 lint
 
 echo "[2/3] YAML parse validation"
 ruby <<'RUBY'
