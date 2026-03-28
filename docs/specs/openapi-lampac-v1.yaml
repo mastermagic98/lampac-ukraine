@@ -1,37 +1,3 @@
-openapi: 3.0.3
-
-info:
-  title: Lampac Export API
-  version: "1.0.0"
-  description: >
-    API контракт для експорту контенту/джерел у Lampac.
-    Провайдери сортуються за пріоритетом:
-    ashdi > hdvbua > tortuga > uaflix/zetvideo > uafilm > vidsrc_fallback.
-  license:
-    name: MIT
-
-servers:
-  - url: http://localhost:3000
-
-tags:
-  - name: Movie
-    description: Операції з фільмами
-  - name: Series
-    description: Операції з серіалами
-  - name: Enrichment
-    description: Процеси enrichment
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-# 🔥 ФІКС ВСІХ ERRORS
-security:
-  - bearerAuth: []
-
 paths:
   /api/lampac/movie/{tmdb_id}:
     get:
@@ -57,19 +23,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MovieExportResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/MovieExportResponse"
         "404":
           description: Контент не знайдено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
         "500":
           description: Внутрішня помилка
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
 
   /api/lampac/movie/imdb/{imdb_id}:
     get:
@@ -95,19 +61,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MovieExportResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/MovieExportResponse"
         "404":
           description: Контент не знайдено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
         "500":
           description: Внутрішня помилка
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
 
   /api/lampac/series/{tmdb_id}:
     get:
@@ -133,17 +99,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SeriesExportResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/SeriesExportResponse"
         "404":
           description: Серіал не знайдено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
 
   /api/lampac/series/{tmdb_id}/season/{season}/episode/{episode}:
     get:
-      operationId: getEpisodeSources
+      operationId: getSeriesEpisodeByTmdbId
       tags: [Series]
       summary: Отримати джерела для конкретного епізоду
       parameters:
@@ -177,17 +143,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EpisodeExportResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/EpisodeExportResponse"
         "404":
           description: Епізод або контент не знайдено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
 
   /api/lampac/enrich/by-tmdb:
     post:
-      operationId: startEnrichmentByTmdb
+      operationId: startEnrichmentByTmdbId
       tags: [Enrichment]
       summary: Запустити enrichment за TMDB ID
       requestBody:
@@ -195,20 +161,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EnrichByTmdbRequest"
+              $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/EnrichByTmdbRequest"
       responses:
         "202":
           description: Задача прийнята
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnrichAcceptedResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/EnrichAcceptedResponse"
         "400":
           description: Некоректний запит
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
 
   /api/lampac/enrich/jobs/{job_id}:
     get:
@@ -228,10 +194,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnrichJobStatusResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/EnrichJobStatusResponse"
         "404":
           description: Задачу не знайдено
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "./openapi-lampac-schemas-v1.yaml#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
