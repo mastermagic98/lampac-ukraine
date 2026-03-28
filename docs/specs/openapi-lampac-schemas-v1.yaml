@@ -1,0 +1,332 @@
+---
+components:
+  schemas:
+    ProviderCode:
+      type: string
+      enum:
+      - ashdi
+      - hdvbua
+      - tortuga
+      - uaflix_zetvideo
+      - uafilm
+      - vidsrc_fallback
+    PlaybackMode:
+      type: string
+      enum:
+      - m3u8
+      - embed
+    ContentType:
+      type: string
+      enum:
+      - movie
+      - series
+    JobStatus:
+      type: string
+      enum:
+      - queued
+      - running
+      - done
+      - partial
+      - failed
+      - canceled
+    Subtitle:
+      type: object
+      properties:
+        label:
+          type: string
+          example: Українські
+        lang:
+          type: string
+          example: uk
+        url:
+          type: string
+          format: uri
+        default:
+          type: boolean
+          default: false
+      required:
+      - url
+    SourceHeaders:
+      type: object
+      additionalProperties:
+        type: string
+      example:
+        Referer: https://uafilm.me/
+    SourceMeta:
+      type: object
+      properties:
+        content_type:
+          "$ref": "#/components/schemas/ContentType"
+        season_number:
+          type: integer
+          minimum: 1
+          nullable: true
+        episode_number:
+          type: integer
+          minimum: 1
+          nullable: true
+    SourceItem:
+      type: object
+      properties:
+        source_id:
+          type: integer
+          format: int64
+        provider:
+          "$ref": "#/components/schemas/ProviderCode"
+        provider_priority:
+          type: integer
+          minimum: 1
+          maximum: 6
+        discovery_source:
+          type: string
+          example: uakino.ac
+        voice_group:
+          type: string
+          nullable: true
+          example: DniproFilm
+        quality:
+          type: string
+          nullable: true
+          example: 1080p
+        is_active:
+          type: boolean
+        playback_mode:
+          "$ref": "#/components/schemas/PlaybackMode"
+        m3u8_url:
+          type: string
+          format: uri
+          nullable: true
+        embed_url:
+          type: string
+          format: uri
+          nullable: true
+        poster_url:
+          type: string
+          format: uri
+          nullable: true
+        headers:
+          "$ref": "#/components/schemas/SourceHeaders"
+        subtitles:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Subtitle"
+        meta:
+          "$ref": "#/components/schemas/SourceMeta"
+      required:
+      - provider
+      - provider_priority
+      - is_active
+      - playback_mode
+      - subtitles
+    ContentInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tmdb_id:
+          type: integer
+          format: int64
+          nullable: true
+        imdb_id:
+          type: string
+          nullable: true
+          pattern: "^tt[0-9]{6,12}$"
+        type:
+          "$ref": "#/components/schemas/ContentType"
+        title_ua:
+          type: string
+        title_original:
+          type: string
+          nullable: true
+        year:
+          type: integer
+          nullable: true
+        original_language:
+          type: string
+          nullable: true
+        poster:
+          type: string
+          format: uri
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+      - type
+      - title_ua
+    EpisodeInfo:
+      type: object
+      properties:
+        season_number:
+          type: integer
+          minimum: 1
+        episode_number:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          nullable: true
+      required:
+      - season_number
+      - episode_number
+    ExportMeta:
+      type: object
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: v1
+        fallback_used:
+          type: boolean
+      required:
+      - generated_at
+      - version
+      - fallback_used
+    MovieExportResponse:
+      type: object
+      properties:
+        content:
+          "$ref": "#/components/schemas/ContentInfo"
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SourceItem"
+        export_meta:
+          "$ref": "#/components/schemas/ExportMeta"
+      required:
+      - content
+      - sources
+      - export_meta
+    SeriesEpisodeItem:
+      type: object
+      properties:
+        episode:
+          "$ref": "#/components/schemas/EpisodeInfo"
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SourceItem"
+      required:
+      - episode
+      - sources
+    SeriesSeasonItem:
+      type: object
+      properties:
+        season_number:
+          type: integer
+          minimum: 1
+        episodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SeriesEpisodeItem"
+      required:
+      - season_number
+      - episodes
+    SeriesExportResponse:
+      type: object
+      properties:
+        content:
+          "$ref": "#/components/schemas/ContentInfo"
+        seasons:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SeriesSeasonItem"
+        export_meta:
+          "$ref": "#/components/schemas/ExportMeta"
+      required:
+      - content
+      - seasons
+      - export_meta
+    EpisodeExportResponse:
+      type: object
+      properties:
+        content:
+          "$ref": "#/components/schemas/ContentInfo"
+        episode:
+          "$ref": "#/components/schemas/EpisodeInfo"
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SourceItem"
+        export_meta:
+          "$ref": "#/components/schemas/ExportMeta"
+      required:
+      - content
+      - episode
+      - sources
+      - export_meta
+    EnrichByTmdbRequest:
+      type: object
+      properties:
+        tmdb_id:
+          type: integer
+          format: int64
+        imdb_id:
+          type: string
+          nullable: true
+          pattern: "^tt[0-9]{6,12}$"
+        content_type:
+          "$ref": "#/components/schemas/ContentType"
+        requested_by:
+          type: string
+          nullable: true
+        force:
+          type: boolean
+          default: false
+      required:
+      - tmdb_id
+      - content_type
+    EnrichAcceptedResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - accepted
+        job_id:
+          type: integer
+          format: int64
+      required:
+      - status
+      - job_id
+    EnrichJobStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+          format: int64
+        status:
+          "$ref": "#/components/schemas/JobStatus"
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        message:
+          type: string
+          nullable: true
+      required:
+      - job_id
+      - status
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: CONTENT_NOT_FOUND
+        message:
+          type: string
+          example: Content not found
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+      required:
+      - code
+      - message
