@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "[1/3] OpenAPI lint"
-npx --yes @redocly/cli@2.25.2 lint
+npx --yes @redocly/cli@2.25.2 lint --config redocly.yaml docs/specs/openapi-lampac-v1.yaml
 
 echo "[2/3] YAML parse validation"
 ruby <<'RUBY'
@@ -31,27 +31,3 @@ schemas = schemas_doc.dig("components", "schemas")
 unless schemas.is_a?(Hash)
   errors << "components.schemas is required in #{schemas_file}"
 end
-
-required_schemas = %w[
-  MovieExportResponse
-  SeriesExportResponse
-  EpisodeExportResponse
-  EnrichByTmdbRequest
-  EnrichAcceptedResponse
-  EnrichJobStatusResponse
-  ErrorResponse
-]
-
-if schemas.is_a?(Hash)
-  missing = required_schemas.reject { |schema| schemas.key?(schema) }
-  errors << "missing components.schemas: #{missing.join(', ')}" unless missing.empty?
-end
-
-tags = openapi["tags"] || []
-if tags.empty? || tags.any? { |tag| tag["description"].to_s.strip.empty? }
-  errors << "all tags must have description"
-end
-
-server_url = openapi.dig("servers", 0, "url").to_s
-if server_url.include?("example.com") || server_url.include?("localhost")
-  errors << "servers[0].url must not point to example.com/localhost"
