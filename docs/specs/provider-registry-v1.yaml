@@ -1,0 +1,219 @@
+version: 1
+updated_at: "2026-03-27"
+
+provider_priority:
+  - ashdi
+  - hdvbua
+  - tortuga
+  - uaflix_zetvideo
+  - uafilm
+  - vidsrc_fallback
+
+query_normalization:
+  imdb_variants:
+    - "{imdb_id}"        # tt26748321
+    - "{imdb_id_no_tt}"  # 26748321
+  title_variants:
+    - "{title_ua}"
+    - "{title_original}"
+
+providers:
+  ashdi:
+    priority: 1
+    enabled: true
+    entry_patterns:
+      - "https://ashdi.vip/serial/{id}"
+      - "https://ashdi.vip/vod/{id}"
+    extraction:
+      parser: "playerjs"
+      file_field: "file"
+      recursive_folder: true
+      leaf_fields: ["file", "poster", "subtitle", "id", "vid", "title"]
+      voice_group_from_folder: true
+    brokers:
+      - hd_kinoua_pro
+      - uakinogo_club
+      - uakino_best
+      - klon_fun
+      - uakino_ac
+
+  hdvbua:
+    priority: 2
+    enabled: true
+    entry_patterns:
+      - "https://hdvbua.pro/embed/{id}"
+      - "https://hdvbua.pro/embed/{id}/{token}"
+    extraction:
+      parser: "playerjs"
+      file_field: "file"
+      recursive_folder: true
+      leaf_fields: ["file", "id", "poster", "subtitle", "title"]
+      voice_group_from_folder: true
+    brokers:
+      - uakino_cx
+      - uaserials_my
+      - eneyida_tv
+
+  tortuga:
+    priority: 3
+    enabled: true
+    entry_patterns:
+      - "https://tortuga.tw/embed/{id}"
+      - "https://tortuga.tw/vod/{id}"
+    extraction:
+      parser: "tortuga_core"
+      fields: ["file", "poster", "subtitle", "label", "skin"]
+      decode_pipeline:
+        - strip_quality_prefix
+        - base64_decode
+        - reverse
+        - second_pass_if_needed
+      recursive_folder: true
+    brokers:
+      - kinoukr_tv
+      - uaserials_com
+      - kinovezha_tv
+
+  uaflix_zetvideo:
+    priority: 4
+    enabled: true
+    extraction:
+      strategy:
+        - parse_uaflix_episode_page
+        - if_video_src_blob_then_fetch_zetvideo_vod
+      zetvideo_parser: "playerjs"
+      fields: ["file", "poster", "subtitle"]
+
+  uafilm:
+    priority: 5
+    enabled: true
+    extraction:
+      search_path: "/search/{query}"
+      title_path: "/titles/{id}/{slug}"
+      episode_path: "/titles/{id}/{slug}/season/{s}/episode/{e}"
+      watch_path: "/watch/{watch_id}"
+      watch_src_regex: "\"src\":\"(https:\\\/\\\/uafilm\\.me\\/[^\"]+index\\.m3u8)\""
+      unescape_slashes: true
+
+  vidsrc_fallback:
+    priority: 6
+    enabled: true
+    strict_original_language_uk: true
+    entry_templates:
+      movie: "https://vidsrc-embed.ru/embed/movie/{imdb_id}"
+      tv: "https://vidsrc-embed.ru/embed/tv/{imdb_id}"
+    embed_only: true
+
+subtitle_parsing:
+  format: "[Label]url,[Label2]url2"
+  allow_empty: true
+  malformed_tolerant: true
+  malformed_examples: ["["]
+
+brokers:
+  hd_kinoua_pro:
+    base_url: "https://hd.kinoua.pro"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.construct__short-in[href]"
+    extract_embed_patterns:
+      - "https://ashdi.vip/serial/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  uakinogo_club:
+    base_url: "https://uakinogo.club"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.th-in[href]"
+    content_rules:
+      force_watch_suffix: "/dyvytys-onlain"
+      embed_selector: ".ajax-player[data-src]"
+    extract_embed_patterns:
+      - "https://ashdi.vip/serial/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  uakino_best:
+    base_url: "https://uakino.best"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.movie-title[href]"
+    content_rules:
+      episode_list_selector: ".playlists-videos li[data-file]"
+      data_file_scheme_prefix: "https:"
+    extract_embed_patterns:
+      - "//ashdi.vip/vod/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  klon_fun:
+    base_url: "https://klon.fun"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.short-news__small-card__link[href]"
+    content_rules:
+      iframe_selector: ".film-player iframe"
+      src_priority: ["data-src", "src"]
+    extract_embed_patterns:
+      - "https://ashdi.vip/serial/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  uakino_ac:
+    base_url: "https://uakino.ac"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "article.post h2 a[href]"
+    extract_embed_patterns:
+      - "https://ashdi.vip/serial/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  uakino_cx:
+    base_url: "https://uakino.cx"
+    query_mode: "imdb_without_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.item__title[href]"
+    extract_embed_patterns:
+      - "https://hdvbua.pro/embed/\\d+(/[a-zA-Z0-9]+)?"
+
+  uaserials_my:
+    base_url: "https://uaserials.my"
+    query_mode: "imdb_with_tt"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.short-img[href]"
+    extract_embed_patterns:
+      - "https://hdvbua.pro/embed/\\d+(/[a-zA-Z0-9]+)?"
+
+  eneyida_tv:
+    base_url: "https://eneyida.tv"
+    query_mode: "title_pick_first"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.short_img[href], a.short_title[href]"
+    extract_embed_patterns:
+      - "https://hdvbua.pro/embed/\\d+(/[a-zA-Z0-9]+)?"
+
+  kinoukr_tv:
+    base_url: "https://kinoukr.tv"
+    query_mode: "title"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.short-title[href], a.mask.ps-link[href]"
+    extract_embed_patterns:
+      - "https://tortuga.tw/embed/\\d+"
+      - "https://tortuga.tw/vod/\\d+"
+      - "https://ashdi.vip/serial/\\d+"
+      - "https://ashdi.vip/vod/\\d+"
+
+  uaserials_com:
+    base_url: "https://uaserials.com"
+    query_mode: "title"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.short-img[href]"
+    extract_embed_patterns:
+      - "https://tortuga.tw/embed/\\d+"
+      - "https://tortuga.tw/vod/\\d+"
+
+  kinovezha_tv:
+    base_url: "https://kinovezha.tv"
+    query_mode: "title"
+    search_path: "/index.php?do=search&subaction=search&search_start=0&full_search=0&result_from=1&story={query}"
+    result_selector: "a.movie-item__link[href]"
+    extract_embed_patterns:
+      - "https://tortuga.tw/embed/\\d+"
+      - "https://tortuga.tw/vod/\\d+"
