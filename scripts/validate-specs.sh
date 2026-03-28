@@ -5,8 +5,7 @@
  cd "$ROOT_DIR"
  
  echo "[1/3] OpenAPI lint"
--npx --yes @redocly/cli@2.25.2 lint --config redocly.yaml docs/specs/openapi-lampac-v1.yaml
-+npx --yes @redocly/cli@1.22.0 lint --config redocly.yaml docs/specs/openapi-lampac-v1.yaml
+ npx --yes @redocly/cli@1.22.0 lint --config redocly.yaml docs/specs/openapi-lampac-v1.yaml
  
  echo "[2/3] YAML parse validation"
  ruby <<'RUBY'
