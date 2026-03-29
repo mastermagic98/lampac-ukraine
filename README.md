@@ -42,3 +42,10 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 2. `docs/specs/lampac-export-queries-v1.sql`
 
 та виставити `DATABASE_URL` (або використовувати дефолт з `app.py`).
+
+### Тести API (без реальної БД)
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
