@@ -1,5 +1,3 @@
-# lampac-ukraine
-
 Документаційний репозиторій специфікацій для інтеграції з Lampac:
 
 - схема БД v1 (`docs/specs/db-mapping-v1.sql`)
@@ -24,3 +22,23 @@ bash scripts/validate-specs.sh
 ### Troubleshooting
 
 - Якщо бачиш помилки `No such file or directory ... openapi-lampac-schemas-v1.yaml`, перевір що файл `docs/specs/openapi-lampac-schemas-v1.yaml` присутній у репозиторії.
+
+## API MVP (runtime)
+
+Мінімальна реалізація API знаходиться у `app.py` і використовує SQL-функції з
+`docs/specs/lampac-export-queries-v1.sql`.
+
+### Швидкий старт
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
+```
+
+Перед запуском потрібно застосувати:
+1. `docs/specs/db-mapping-v1.sql`
+2. `docs/specs/lampac-export-queries-v1.sql`
+
+та виставити `DATABASE_URL` (або використовувати дефолт з `app.py`).
