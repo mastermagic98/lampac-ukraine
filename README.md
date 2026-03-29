@@ -37,7 +37,9 @@ bash scripts/validate-specs.sh
 - `GET /api/lampac/series/{tmdb_id}/season/{season}/episode/{episode}`
 - `POST /api/lampac/enrich/by-tmdb`
 - `GET /api/lampac/enrich/jobs/{job_id}`
-- 
+Помилки для бізнес-кейсів повертаються у форматі:
+`{"code":"...", "message":"..."}`.
+
 ### Швидкий старт
 
 ```bash
