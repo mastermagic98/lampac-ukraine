@@ -59,6 +59,24 @@ def movie_by_tmdb(tmdb_id: int, include_inactive: bool = False) -> Any:
             return _export_or_404(cur.fetchone(), "CONTENT_NOT_FOUND")
 
 
+@app.get("/api/lampac/movie/imdb/{imdb_id}")
+def movie_by_imdb(imdb_id: str, include_inactive: bool = False) -> Any:
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT lampac_export_movie_by_tmdb(c.tmdb_id, %s)
+                FROM content c
+                WHERE c.imdb_id = %s
+                  AND c.content_type = 'movie'
+                  AND c.tmdb_id IS NOT NULL
+                LIMIT 1
+                """,
+                (include_inactive, imdb_id),
+            )
+            return _export_or_404(cur.fetchone(), "CONTENT_NOT_FOUND")
+
+
 @app.get("/api/lampac/series/{tmdb_id}")
 def series_by_tmdb(tmdb_id: int, include_inactive: bool = False) -> Any:
     with get_conn() as conn:
