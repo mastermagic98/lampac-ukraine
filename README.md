@@ -30,6 +30,14 @@ bash scripts/validate-specs.sh
 Мінімальна реалізація API знаходиться у `app.py` і використовує SQL-функції з
 `docs/specs/lampac-export-queries-v1.sql`.
 
+Підтримані endpoint-и MVP:
+- `GET /api/lampac/movie/{tmdb_id}`
+- `GET /api/lampac/movie/imdb/{imdb_id}`
+- `GET /api/lampac/series/{tmdb_id}`
+- `GET /api/lampac/series/{tmdb_id}/season/{season}/episode/{episode}`
+- `POST /api/lampac/enrich/by-tmdb`
+- `GET /api/lampac/enrich/jobs/{job_id}`
+- 
 ### Швидкий старт
 
 ```bash
