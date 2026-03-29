@@ -45,7 +45,7 @@ class FakeCursor:
             self._row = (777,)
             return
 
-@@ -70,50 +77,65 @@ def fake_get_conn():
+def fake_get_conn():
     yield FakeConn()
 
 
@@ -69,7 +69,8 @@ def test_movie_not_found(monkeypatch):
     client = TestClient(app_module.app)
     r = client.get("/api/lampac/movie/404")
     assert r.status_code == 404
-
+    assert r.json()["code"] == "CONTENT_NOT_FOUND"
+    
 
 def test_movie_by_imdb(monkeypatch):
     monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
@@ -83,7 +84,34 @@ def test_movie_by_imdb_not_found(monkeypatch):
     monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
     client = TestClient(app_module.app)
     r = client.get("/api/lampac/movie/imdb/tt404")
+    assert r.status_code == 422
+
+
+def test_movie_by_imdb_invalid_format(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/movie/imdb/imdb123")
+    assert r.status_code == 422
+
+
+def test_enrich_invalid_content_type(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.post(
+        "/api/lampac/enrich/by-tmdb",
+        json={"tmdb_id": 10, "content_type": "anime"},
+    )
+    assert r.status_code == 400
+    assert r.json()["code"] == "INVALID_CONTENT_TYPE"
+
+
+def test_enrichment_job_not_found(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/enrich/jobs/404")
+
     assert r.status_code == 404
+    assert r.json()["code"] == "JOB_NOT_FOUND"
 
 
 def test_episode_export(monkeypatch):
@@ -104,10 +132,3 @@ def test_enqueue_enrichment(monkeypatch):
     )
     assert r.status_code == 202
     assert r.json() == {"status": "accepted", "job_id": 777}
-
-
-def test_enrichment_job_not_found(monkeypatch):
-    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
-    client = TestClient(app_module.app)
-    r = client.get("/api/lampac/enrich/jobs/404")
-    assert r.status_code == 404
