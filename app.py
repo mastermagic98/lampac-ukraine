@@ -85,7 +85,7 @@ class EnrichByTmdbRequest(BaseModel):
     """Payload for manual enrichment requests."""
 
     tmdb_id: int
-@@ -68,142 +92,142 @@ class EnrichByTmdbRequest(BaseModel):
+class EnrichByTmdbRequest(BaseModel):
 
     @field_validator("imdb_id")
     @classmethod
