@@ -6,6 +6,7 @@
  - контракт експорту (`docs/specs/lampac-export-contract-v1.md`)
  - OpenAPI (`docs/specs/openapi-lampac-v1.yaml`)
  - OpenAPI schemas (`docs/specs/openapi-lampac-schemas-v1.yaml`)
+ - OpenAPI schemas (`docs/specs/openapi-lampac-schemas-v1.yaml`)
  - реєстр провайдерів (`docs/specs/provider-registry-v1.yaml`)
  - план міграції (`docs/specs/migration-plan-v1.md`)
  
