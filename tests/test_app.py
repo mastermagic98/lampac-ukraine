@@ -13,6 +13,13 @@ class FakeCursor:
         self._row = None
 
     def execute(self, query, params=None):
+        if "FROM content c" in query and "lampac_export_movie_by_tmdb" in query:
+            if params[1] == "tt404":
+                self._row = (None,)
+            else:
+                self._row = ({"content": {"imdb_id": params[1]}, "sources": []},)
+            return
+
         if "lampac_export_movie_by_tmdb" in query:
             if params[0] == 404:
                 self._row = (None,)
@@ -38,35 +45,7 @@ class FakeCursor:
             self._row = (777,)
             return
 
-        if "FROM enrichment_job" in query:
-            if params[0] == 404:
-                self._row = None
-            else:
-                self._row = (params[0], "queued", None, None, None)
-            return
-
-        raise AssertionError(f"Unexpected query: {query}")
-
-    def fetchone(self):
-        return self._row
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-
-class FakeConn:
-    def cursor(self):
-        return FakeCursor()
-
-    def commit(self):
-        return None
-
-
-@contextmanager
-def fake_get_conn():
+@@ -70,50 +77,65 @@ def fake_get_conn():
     yield FakeConn()
 
 
@@ -89,6 +68,21 @@ def test_movie_not_found(monkeypatch):
     monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
     client = TestClient(app_module.app)
     r = client.get("/api/lampac/movie/404")
+    assert r.status_code == 404
+
+
+def test_movie_by_imdb(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/movie/imdb/tt1234567")
+    assert r.status_code == 200
+    assert r.json()["content"]["imdb_id"] == "tt1234567"
+
+
+def test_movie_by_imdb_not_found(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/movie/imdb/tt404")
     assert r.status_code == 404
 
 
