@@ -1,10 +1,11 @@
-from contextlib import contextmanager
+rom contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any
 
 import psycopg
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, Path
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,12 +30,36 @@ def get_conn():
 app = FastAPI(title="Lampac API MVP", version="0.1.0")
 
 
+class ApiError(Exception):
+    def __init__(self, status_code: int, code: str, message: str):
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+
+
+@app.exception_handler(ApiError)
+def api_error_handler(_, exc: ApiError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"code": exc.code, "message": exc.message},
+    )
+
+
 class EnrichByTmdbRequest(BaseModel):
     tmdb_id: int
     imdb_id: str | None = None
     content_type: str
     requested_by: str | None = None
     force: bool = False
+
+    @field_validator("imdb_id")
+    @classmethod
+    def validate_imdb_id(cls, v: str | None):
+        if v is None:
+            return v
+        if not v.startswith("tt") or not v[2:].isdigit():
+            raise ValueError("imdb_id must be in format tt1234567")
+        return v
 
 
 @app.get("/healthz")
@@ -44,7 +69,7 @@ def healthcheck() -> dict[str, str]:
 
 def _export_or_404(row: tuple[Any] | None, not_found_message: str) -> Any:
     if not row or row[0] is None:
-        raise HTTPException(status_code=404, detail=not_found_message)
+        raise ApiError(status_code=404, code=not_found_message, message=not_found_message)
     return row[0]
 
 
@@ -60,7 +85,10 @@ def movie_by_tmdb(tmdb_id: int, include_inactive: bool = False) -> Any:
 
 
 @app.get("/api/lampac/movie/imdb/{imdb_id}")
-def movie_by_imdb(imdb_id: str, include_inactive: bool = False) -> Any:
+def movie_by_imdb(
+    imdb_id: str = Path(pattern=r"^tt[0-9]{6,12}$"),
+    include_inactive: bool = False,
+) -> Any:
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -107,7 +135,11 @@ def episode_by_tmdb(
 @app.post("/api/lampac/enrich/by-tmdb", status_code=202)
 def enrich_by_tmdb(payload: EnrichByTmdbRequest) -> dict[str, Any]:
     if payload.content_type not in {"movie", "series"}:
-        raise HTTPException(status_code=400, detail="INVALID_CONTENT_TYPE")
+        raise ApiError(
+            status_code=400,
+            code="INVALID_CONTENT_TYPE",
+            message="content_type must be movie or series",
+        )
 
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -146,7 +178,11 @@ def enrich_job_status(job_id: int) -> dict[str, Any]:
             )
             row = cur.fetchone()
             if not row:
-                raise HTTPException(status_code=404, detail="JOB_NOT_FOUND")
+                raise ApiError(
+                    status_code=404,
+                    code="JOB_NOT_FOUND",
+                    message="Job not found",
+                )
 
     started_at = row[2].astimezone(timezone.utc).isoformat() if row[2] else None
     finished_at = row[3].astimezone(timezone.utc).isoformat() if row[3] else None
