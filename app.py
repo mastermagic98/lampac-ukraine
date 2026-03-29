@@ -38,7 +38,33 @@ def get_conn():
 
 
 @contextmanager
+def _open_conn():
+    """Open connection from get_conn() supporting both context managers and generators."""
+    resource = get_conn()
+    if hasattr(resource, "__enter__") and hasattr(resource, "__exit__"):
+        with resource as conn:
+            yield conn
+        return
+
+    if isinstance(resource, GeneratorType):
+        conn = next(resource)
+        try:
+            yield conn
+        finally:
+            try:
+                next(resource)
+            except StopIteration:
+                pass
+        return
+
+    raise TypeError("get_conn() must return a context manager or generator")
+
+
+app = FastAPI(title="Lampac API MVP", version="0.1.0")
+
+
 class ApiError(Exception):
+    """Structured API exception for consistent error payloads."""
 
     def __init__(self, status_code: int, code: str, message: str):
         self.status_code = status_code
@@ -46,13 +72,15 @@ class ApiError(Exception):
         self.message = message
 
 
-@app.exception_handler(ApiError)
 def api_error_handler(_, exc: ApiError):
     """Map ApiError to {'code','message'} payload."""
     return JSONResponse(
         status_code=exc.status_code,
         content={"code": exc.code, "message": exc.message},
     )
+
+
+app.add_exception_handler(ApiError, api_error_handler)
 
 
 class EnrichByTmdbRequest(BaseModel):
@@ -86,6 +114,8 @@ def movie_by_tmdb(tmdb_id: int, include_inactive: bool = False) -> Any:
                 (tmdb_id, include_inactive),
             )
             return _export_or_404(cur.fetchone(), "CONTENT_NOT_FOUND")
+
+
 @app.get("/api/lampac/movie/imdb/{imdb_id}")
 def movie_by_imdb(
     imdb_id: str = Path(pattern=r"^tt[0-9]{6,12}$"),
