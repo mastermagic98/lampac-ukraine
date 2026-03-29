@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS resolver_cache (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_resolver_key
-ON resolver_cache (normalized_title, COALESCE(year,0), COALESCE(content_type::text,''));
+ON resolver_cache (normalized_title, COALESCE(year,0), (content_type IS NULL), content_type);
 
 CREATE TABLE IF NOT EXISTS content_source_state (
   content_id BIGINT PRIMARY KEY REFERENCES content(id) ON DELETE CASCADE,
