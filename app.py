@@ -12,7 +12,7 @@ from typing import Any
 import psycopg
 from fastapi import FastAPI, Path
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,33 +38,7 @@ def get_conn():
 
 
 @contextmanager
-def _open_conn():
-    """Open connection from get_conn() supporting both context managers and generators."""
-    resource = get_conn()
-    if hasattr(resource, "__enter__") and hasattr(resource, "__exit__"):
-        with resource as conn:
-            yield conn
-        return
-
-    if isinstance(resource, GeneratorType):
-        conn = next(resource)
-        try:
-            yield conn
-        finally:
-            try:
-                next(resource)
-            except StopIteration:
-                pass
-        return
-
-    raise TypeError("get_conn() must return a context manager or generator")
-
-
-app = FastAPI(title="Lampac API MVP", version="0.1.0")
-
-
-class ApiError(Exception):
-    """Structured API exception for consistent error payloads."""
+@@ -68,59 +68,50 @@ class ApiError(Exception):
 
     def __init__(self, status_code: int, code: str, message: str):
         self.status_code = status_code
@@ -85,16 +59,10 @@ class EnrichByTmdbRequest(BaseModel):
     """Payload for manual enrichment requests."""
 
     tmdb_id: int
-class EnrichByTmdbRequest(BaseModel):
-
-    @field_validator("imdb_id")
-    @classmethod
-    def validate_imdb_id(cls, value: str | None):
-        if value is None:
-            return value
-        if not value.startswith("tt") or not value[2:].isdigit():
-            raise ValueError("imdb_id must be in format tt1234567")
-        return value
+    imdb_id: str | None = None
+    content_type: str
+    requested_by: str | None = None
+    force: bool = False
 
 
 def _export_or_404(row: tuple[Any] | None, code: str) -> Any:
@@ -118,8 +86,6 @@ def movie_by_tmdb(tmdb_id: int, include_inactive: bool = False) -> Any:
                 (tmdb_id, include_inactive),
             )
             return _export_or_404(cur.fetchone(), "CONTENT_NOT_FOUND")
-
-
 @app.get("/api/lampac/movie/imdb/{imdb_id}")
 def movie_by_imdb(
     imdb_id: str = Path(pattern=r"^tt[0-9]{6,12}$"),
