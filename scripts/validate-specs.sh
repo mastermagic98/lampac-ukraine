@@ -5,9 +5,16 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "[0/4] Merge marker validation"
-if rg -n "^(<<<<<<<|=======|>>>>>>>)" --glob "*.py" --glob "*.sh" --glob "*.yaml" --glob "*.yml" .; then
-  echo "ERROR: merge conflict markers detected" >&2
-  exit 1
+if command -v rg >/dev/null 2>&1; then
+  if rg -n "^(<<<<<<<|=======|>>>>>>>)" --glob "*.py" --glob "*.sh" --glob "*.yaml" --glob "*.yml" .; then
+    echo "ERROR: merge conflict markers detected" >&2
+    exit 1
+  fi
+else
+  if find . -type f \( -name "*.py" -o -name "*.sh" -o -name "*.yaml" -o -name "*.yml" \) -print0     | xargs -0 grep -nE "^(<<<<<<<|=======|>>>>>>>)"; then
+    echo "ERROR: merge conflict markers detected" >&2
+    exit 1
+  fi
 fi
 
 echo "[1/4] OpenAPI validation"
