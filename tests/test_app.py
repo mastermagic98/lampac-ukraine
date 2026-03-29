@@ -72,6 +72,34 @@ def test_movie_not_found(monkeypatch):
     assert r.json()["code"] == "CONTENT_NOT_FOUND"
     
 
+def fake_get_conn():
+    yield FakeConn()
+
+
+def test_healthcheck():
+    client = TestClient(app_module.app)
+    r = client.get("/healthz")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
+
+
+def test_movie_found(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/movie/100")
+    assert r.status_code == 200
+    assert r.json()["content"]["tmdb_id"] == 100
+
+
+def test_movie_not_found(monkeypatch):
+    monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
+    client = TestClient(app_module.app)
+    r = client.get("/api/lampac/movie/404")
+    assert r.status_code == 404
+    assert r.json()["code"] == "CONTENT_NOT_FOUND"
+    assert r.json()["message"] == "CONTENT_NOT_FOUND"
+
+
 def test_movie_by_imdb(monkeypatch):
     monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
     client = TestClient(app_module.app)
@@ -109,9 +137,9 @@ def test_enrichment_job_not_found(monkeypatch):
     monkeypatch.setattr(app_module, "get_conn", fake_get_conn)
     client = TestClient(app_module.app)
     r = client.get("/api/lampac/enrich/jobs/404")
-
     assert r.status_code == 404
     assert r.json()["code"] == "JOB_NOT_FOUND"
+    assert r.json()["message"] == "Job not found"
 
 
 def test_episode_export(monkeypatch):
